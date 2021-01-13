@@ -55,7 +55,7 @@ def check_type(val):
 def build_game_tree():
     p = 1
 
-    TIMESTEPS = 4
+    TIMESTEPS = 2
 
     num_defender_actions = 3
     num_attacker_actions = 5
@@ -163,6 +163,8 @@ if __name__ == '__main__':
 
     print (s[0].payoff(g.players[0]))
     print (s[0].payoff(g.players[1]))
+
+    print(s[0][g.players[0]])
 
     # print g.write()
     #
