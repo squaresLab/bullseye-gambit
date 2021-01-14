@@ -1,6 +1,7 @@
 import gambit
 import sim
 from decimal import *
+import parser
 
 
 def change_base(x, b, digits=0):
@@ -52,7 +53,12 @@ def check_type(val):
         return gambit.Decimal.from_float(val)
 
 
-def build_game_tree():
+def build_game_tree_br(defender_ecj_string):
+    defender_ecj_parsed = parser.parse(defender_ecj_string)
+    return build_game_tree(defender_ecj_parsed)
+
+
+def build_game_tree(defender_ecj_obj=None):
     p = 1
 
     TIMESTEPS = 2
@@ -73,7 +79,7 @@ def build_game_tree():
     defender_memory = {}
     attacker_memory = {}
 
-    def fill_defender_moves(node, stateprime, p, t, defender_payoff, attacker_payoff, def_hist, attacker_hist):
+    def fill_defender_moves(node, stateprime, p, t, defender_payoff, attacker_payoff, def_hist, attacker_hist, forced_defender):
         t += 1
 
         if def_hist in defender_memory:
