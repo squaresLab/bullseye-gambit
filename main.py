@@ -54,7 +54,7 @@ def check_type(val):
 
 
 def build_game_tree_br(defender_ecj_string):
-    defender_ecj_parsed = parser.parse(defender_ecj_string)
+    defender_ecj_parsed = parser.list_obj_to_node(parser.parse(defender_ecj_string)[0])
     return build_game_tree(defender_ecj_parsed)
 
 
@@ -80,44 +80,122 @@ def build_game_tree(defender_ecj_obj=None):
     attacker_memory = {}
 
     def fill_defender_moves(node, stateprime, p, t, defender_payoff, attacker_payoff, def_hist, attacker_hist, forced_defender):
-        t += 1
 
-        if def_hist in defender_memory:
-            move = node.append_move(defender_memory[def_hist])
-        else:
-            move = node.append_move(defender, num_defender_actions)
-            defender_memory[def_hist] = move
+        if forced_defender is None:
 
-        attacknodes = node.children
-        for j in range(len(attacknodes)):
+            t += 1
 
-            def_histp = def_hist + str(j)
-            # print(def_histp)
-
-            node = attacknodes[j]
-            stateprime2 = stateprime.copy()
-            sim.apply_defender_action(j, stateprime2)
-
-            # defender_payoff = defender_payoff + sim.get_defender_payoff(stateprime2) * p
-
-            attacker_inst_payoff = sim.get_attacker_payoff(stateprime2)
-
-            attacker_payoff_prime = attacker_payoff + attacker_inst_payoff * p
-            defender_payoff_prime = -1 * attacker_payoff_prime
-
-            if t >= TIMESTEPS:
-                outcome = g.outcomes.add("oc")
-                outcome[0] = check_type(defender_payoff_prime)
-                outcome[1] = check_type(attacker_payoff_prime)
-                node.outcome = outcome
-                # print(stateprime2)
-                # print(attacker_inst_payoff)
-                # print (check_type(defender_payoff))
-                # print (check_type(attacker_payoff))
+            if def_hist in defender_memory:
+                move = node.append_move(defender_memory[def_hist])
             else:
-                fill_attacker_moves(node, stateprime2, p, t, defender_payoff_prime, attacker_payoff_prime, def_histp, attacker_hist)
+                move = node.append_move(defender, num_defender_actions)
+                defender_memory[def_hist] = move
 
-    def fill_attacker_moves(node, state, p, t, defender_payoff, attacker_payoff, def_hist, attacker_hist):
+            attacknodes = node.children
+            for j in range(len(attacknodes)):
+
+                def_histp = def_hist + str(j)
+                # print(def_histp)
+
+                node = attacknodes[j]
+                stateprime2 = stateprime.copy()
+                sim.apply_defender_action(j, stateprime2)
+
+                # defender_payoff = defender_payoff + sim.get_defender_payoff(stateprime2) * p
+
+                attacker_inst_payoff = sim.get_attacker_payoff(stateprime2)
+
+                attacker_payoff_prime = attacker_payoff + attacker_inst_payoff * p
+                defender_payoff_prime = -1 * attacker_payoff_prime
+
+                if t >= TIMESTEPS:
+                    outcome = g.outcomes.add("oc")
+                    outcome[0] = check_type(defender_payoff_prime)
+                    outcome[1] = check_type(attacker_payoff_prime)
+                    node.outcome = outcome
+                    # print(stateprime2)
+                    # print(attacker_inst_payoff)
+                    # print (check_type(defender_payoff))
+                    # print (check_type(attacker_payoff))
+                else:
+                    fill_attacker_moves(node, stateprime2, p, t, defender_payoff_prime, attacker_payoff_prime, def_histp, attacker_hist, forced_defender)
+        else:
+            # lock defender move to find best response
+
+            if forced_defender.visisted:
+                fill_defender_moves(node, stateprime, p, t, defender_payoff, attacker_payoff, def_hist,
+                                    attacker_hist, forced_defender.parent)
+
+            if forced_defender.data == "R":
+                decision_prob = forced_defender.p
+                defender_action_one = forced_defender.children[0]
+                defender_action_two = forced_defender.children[1]
+                forced_defender.visited = True
+
+                move = node.append_move(chance, 2)
+
+                action_one_node = node.children[0]
+                action_one_node.prior_action.prob = decision_prob
+
+                fill_defender_moves(action_one_node, stateprime, p, t, defender_payoff, attacker_payoff, def_hist,
+                                    attacker_hist, defender_action_one)
+
+                action_two_node = node.children[1]
+                action_two_node.prior_action.prob = 1 - decision_prob
+
+                fill_defender_moves(action_two_node, stateprime, p, t, defender_payoff, attacker_payoff, def_hist,
+                                    attacker_hist, defender_action_two)
+
+            elif forced_defender.data == ";":
+                # this is sequence operator
+                defender_action_one = forced_defender.children[0]
+                defender_action_two = forced_defender.children[1]
+
+                if not defender_action_one.visited:
+                    fill_defender_moves(node, stateprime, p, t, defender_payoff, attacker_payoff, def_hist,
+                                        attacker_hist, defender_action_one)
+                elif not defender_action_two.visited:
+                    fill_defender_moves(node, stateprime, p, t, defender_payoff, attacker_payoff, def_hist,
+                                        attacker_hist, defender_action_two)
+                else:
+                    forced_defender.visited = True
+                    fill_defender_moves(node, stateprime, p, t, defender_payoff, attacker_payoff, def_hist,
+                                        attacker_hist, forced_defender.parent)
+            else:
+                # then this is a simple tactic
+                t += 1
+
+                defender_tactic = int(forced_defender.data)
+
+                def_histp = def_hist + str(defender_tactic)
+
+                stateprime2 = stateprime.copy()
+                sim.apply_defender_action(defender_tactic, stateprime2)
+
+                # defender_payoff = defender_payoff + sim.get_defender_payoff(stateprime2) * p
+
+                attacker_inst_payoff = sim.get_attacker_payoff(stateprime2)
+
+                attacker_payoff_prime = attacker_payoff + attacker_inst_payoff * p
+                defender_payoff_prime = -1 * attacker_payoff_prime
+
+                if t >= TIMESTEPS:
+                    outcome = g.outcomes.add("oc")
+                    outcome[0] = check_type(defender_payoff_prime)
+                    outcome[1] = check_type(attacker_payoff_prime)
+                    node.outcome = outcome
+                    # print(stateprime2)
+                    # print(attacker_inst_payoff)
+                    # print (check_type(defender_payoff))
+                    # print (check_type(attacker_payoff))
+                else:
+                    # backup in the tree since we just visited a leaf
+                    parent = forced_defender.parent
+                    forced_defender.visited = True
+                    fill_attacker_moves(node, stateprime2, p, t, defender_payoff_prime, attacker_payoff_prime,
+                                        def_histp, attacker_hist, parent)
+
+    def fill_attacker_moves(node, state, p, t, defender_payoff, attacker_payoff, def_hist, attacker_hist, forced_defender):
 
         attacker_hist_prime_state = attacker_hist + sim.get_attacker_vis_state_string(state)
 
@@ -143,7 +221,7 @@ def build_game_tree(defender_ecj_obj=None):
 
             p_prime = p * (1 - sim.get_obs(i))
 
-            fill_defender_moves(node, stateprime, p_prime, t, defender_payoff, attacker_payoff, def_hist, attacker_hist_prime)
+            fill_defender_moves(node, stateprime, p_prime, t, defender_payoff, attacker_payoff, def_hist, attacker_hist_prime, forced_defender)
 
     state = sim.get_fresh_state()
 
@@ -151,7 +229,7 @@ def build_game_tree(defender_ecj_obj=None):
 
     node = g.root
 
-    fill_attacker_moves(node, state, p, timestep, 0, 0, "", "")
+    fill_attacker_moves(node, state, p, timestep, 0, 0, "", "", defender_ecj_obj)
 
     return g
 
