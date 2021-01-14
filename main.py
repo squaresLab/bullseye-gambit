@@ -1,3 +1,5 @@
+import copy
+
 import gambit
 import sim
 from decimal import *
@@ -126,11 +128,11 @@ def build_game_tree(defender_ecj_obj=None, force_def_moves=False):
                 # if none then defender takes no action
                 forced_defender = parser.EcjNode("3")
 
-            if forced_defender.visisted:
+            if forced_defender.visited:
                 fill_defender_moves(node, stateprime, p, t, defender_payoff, attacker_payoff, def_hist,
                                     attacker_hist, forced_defender.parent, force_def_moves)
 
-            if forced_defender.data == "R":
+            elif forced_defender.data == "R":
                 decision_prob = forced_defender.p
                 defender_action_one = forced_defender.children[0]
                 defender_action_two = forced_defender.children[1]
@@ -139,13 +141,13 @@ def build_game_tree(defender_ecj_obj=None, force_def_moves=False):
                 move = node.append_move(chance, 2)
 
                 action_one_node = node.children[0]
-                action_one_node.prior_action.prob = decision_prob
+                action_one_node.prior_action.prob = gambit.Decimal(decision_prob)
 
                 fill_defender_moves(action_one_node, stateprime, p, t, defender_payoff, attacker_payoff, def_hist,
                                     attacker_hist, defender_action_one, force_def_moves)
 
                 action_two_node = node.children[1]
-                action_two_node.prior_action.prob = 1 - decision_prob
+                action_two_node.prior_action.prob = gambit.Decimal(1 - decision_prob)
 
                 fill_defender_moves(action_two_node, stateprime, p, t, defender_payoff, attacker_payoff, def_hist,
                                     attacker_hist, defender_action_two, force_def_moves)
@@ -225,7 +227,7 @@ def build_game_tree(defender_ecj_obj=None, force_def_moves=False):
 
             p_prime = p * (1 - sim.get_obs(i))
 
-            fill_defender_moves(node, stateprime, p_prime, t, defender_payoff, attacker_payoff, def_hist, attacker_hist_prime, forced_defender, force_def_moves)
+            fill_defender_moves(node, stateprime, p_prime, t, defender_payoff, attacker_payoff, def_hist, attacker_hist_prime, copy.deepcopy(forced_defender), force_def_moves)
 
     state = sim.get_fresh_state()
 
@@ -245,17 +247,18 @@ if __name__ == '__main__':
     #
     # print s
 
-    g = build_game_tree()
+    # g = build_game_tree()
+    g = build_game_tree_br("(R ERC[d4581030860394171213|0.0186435554|] (; FlashServers (R ERC[d4602435381355194647|0.4864864865|] ChangePword FlashServers)) (; Throttle (R ERC[d4602204756053502270|0.4736842105|] ChangePword FlashServers)))")
     solver = gambit.nash.ExternalLPSolver()
     s = solver.solve(g)
 
     print (s[0].payoff(g.players[0]))
     print (s[0].payoff(g.players[1]))
 
-    print(s[0][g.players[0]])
+    print(s[0][g.players[1]])
 
     # print g.write()
     #
-    # text_file = open("test2.efg", "w")
+    # text_file = open("testforce.efg", "w")
     # n = text_file.write(g.write())
     # text_file.close()
