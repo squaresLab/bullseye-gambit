@@ -248,14 +248,19 @@ if __name__ == '__main__':
     # print s
 
     # g = build_game_tree()
-    g = build_game_tree_br("(R ERC[d4581030860394171213|0.0186435554|] (; FlashServers (R ERC[d4602435381355194647|0.4864864865|] ChangePword FlashServers)) (; Throttle (R ERC[d4602204756053502270|0.4736842105|] ChangePword FlashServers)))")
+    # g = build_game_tree_br("(R ERC[d4581030860394171213|0.0186435554|] (; FlashServers (R ERC[d4602435381355194647|0.4864864865|] ChangePword FlashServers)) (; Throttle (R ERC[d4602204756053502270|0.4736842105|] ChangePword FlashServers)))")
+    # g = build_game_tree_br("(; Throttle (R ERC[d4601545516861873660|0.43708908403593205|] (R ERC[d4603946751954865438|0.6407688168496042|] ChangePword (R ERC[d4604332003863781605|0.6835403708055564|] ChangePword FlashServers)) FlashServers))")
+    g = build_game_tree_br("ChangePword ");
     solver = gambit.nash.ExternalLPSolver()
     s = solver.solve(g)
 
-    print (s[0].payoff(g.players[0]))
-    print (s[0].payoff(g.players[1]))
+    # 2 timestep ne util
+    neutil = 1.78771943969
 
-    print(s[0][g.players[1]])
+    # print (s[0].payoff(g.players[0]))
+    print (neutil - s[0].payoff(g.players[1]))
+
+    # print(s[0][g.players[1]])
 
     # print g.write()
     #

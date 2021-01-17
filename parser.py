@@ -103,7 +103,7 @@ def parse(string, start_index=0):
         end = next_token_end(string, start_index)
         token = string[start_index:end]
 
-        print(token)
+        # print(token)
         return translate(token), end
 
 
