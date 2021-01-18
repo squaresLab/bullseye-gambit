@@ -55,12 +55,13 @@ def check_type(val):
         return gambit.Decimal.from_float(val)
 
 
-def build_game_tree_br(defender_ecj_string):
+def build_game_tree_br(defender_ecj_string, scenario_string):
     defender_ecj_parsed = parser.list_obj_to_node(parser.parse(defender_ecj_string)[0])
-    return build_game_tree(defender_ecj_parsed, True)
+    scenario_list = parser.scenarioStringToList(scenario_string)
+    return build_game_tree(defender_ecj_parsed, True, scenario_list)
 
 
-def build_game_tree(defender_ecj_obj=None, force_def_moves=False):
+def build_game_tree(defender_ecj_obj=None, force_def_moves=False, scenario_list=None):
     p = 1
 
     TIMESTEPS = 2
@@ -82,7 +83,6 @@ def build_game_tree(defender_ecj_obj=None, force_def_moves=False):
     attacker_memory = {}
 
     def fill_defender_moves(node, stateprime, p, t, defender_payoff, attacker_payoff, def_hist, attacker_hist, forced_defender, force_def_moves):
-
         if not force_def_moves:
 
             t += 1
@@ -105,7 +105,7 @@ def build_game_tree(defender_ecj_obj=None, force_def_moves=False):
 
                 # defender_payoff = defender_payoff + sim.get_defender_payoff(stateprime2) * p
 
-                attacker_inst_payoff = sim.get_attacker_payoff(stateprime2)
+                attacker_inst_payoff = sim.get_attacker_payoff(stateprime2, scenario_list)
 
                 attacker_payoff_prime = attacker_payoff + attacker_inst_payoff * p
                 defender_payoff_prime = -1 * attacker_payoff_prime
@@ -180,7 +180,7 @@ def build_game_tree(defender_ecj_obj=None, force_def_moves=False):
 
                 # defender_payoff = defender_payoff + sim.get_defender_payoff(stateprime2) * p
 
-                attacker_inst_payoff = sim.get_attacker_payoff(stateprime2)
+                attacker_inst_payoff = sim.get_attacker_payoff(stateprime2, scenario_list)
 
                 attacker_payoff_prime = attacker_payoff + attacker_inst_payoff * p
                 defender_payoff_prime = -1 * attacker_payoff_prime
@@ -225,7 +225,7 @@ def build_game_tree(defender_ecj_obj=None, force_def_moves=False):
 
             # print(attacker_hist_prime)
 
-            p_prime = p * (1 - sim.get_obs(i))
+            p_prime = p * (1 - sim.get_obs(i, scenario_list))
 
             fill_defender_moves(node, stateprime, p_prime, t, defender_payoff, attacker_payoff, def_hist, attacker_hist_prime, copy.deepcopy(forced_defender), force_def_moves)
 

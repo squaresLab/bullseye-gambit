@@ -17,14 +17,23 @@
 # 4 [exploitPay],
 # 5 [exploitWeb]
 
-def get_obs(a):
-    obs_dict = {
-        0: .2,
-        1: .1,
-        2: .1,
-        3: .05,
-        4: .05,
-    }
+def get_obs(a, scenario_list=None):
+    if scenario_list is None:
+        obs_dict = {
+            0: .2,
+            1: .1,
+            2: .1,
+            3: .05,
+            4: .05,
+        }
+    else:
+        obs_dict = {
+            0: scenario_list[4],
+            1: scenario_list[3],
+            2: scenario_list[1],
+            3: scenario_list[0],
+            4: scenario_list[2],
+        }
     return obs_dict.get(a)
 
 
@@ -90,14 +99,20 @@ def get_defender_payoff(state):
     return util
 
 
-def get_attacker_payoff(state):
+def get_attacker_payoff(state, scenario_list=None):
+
+    if scenario_list is None:
+        source_map = {"web": 1, "pay": 1, "pos": 1}
+    else:
+        source_map = {"web": scenario_list[5], "pay": scenario_list[6], "pos": scenario_list[7]}
+
     sources = 0
     if state["a_has_web_exploit"] or state["a_has_web_pass"]:
-        sources += 1
+        sources += source_map["web"]
     if state["a_has_pay_exploit"] or state["a_has_pay_pass"]:
-        sources += 1
+        sources += source_map["pay"]
     if state["a_has_pos_exploit"]:
-        sources += 1
+        sources += source_map["pos"]
 
     if state["throttle"]:
         return sources

@@ -107,6 +107,17 @@ def parse(string, start_index=0):
         return translate(token), end
 
 
+def scenarioStringToList(scenario_string):
+    ans = []
+
+    string_arr = scenario_string.split(",")
+
+    for s in string_arr:
+        ans.append(float(s))
+
+    return ans
+
+
 if __name__ == '__main__':
     # print(parse("(; (b a) (c d))"))
     node = list_obj_to_node(parse("(R ERC[d4581030860394171213|0.0186435554|] (; FlashServers (R ERC[d4602435381355194647|0.4864864865|] ChangePword FlashServers)) (; Throttle (R ERC[d4602204756053502270|0.4736842105|] ChangePword FlashServers)))")[0])
